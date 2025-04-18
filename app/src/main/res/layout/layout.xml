@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -7,19 +9,19 @@
     <!-- app name -->
     <TextView
         android:paddingLeft="10dp"
-        android:id="@+id/app_name"
+        android:id="@+id/appName"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:gravity="center_vertical"
         android:background="@color/teal_200"
-        android:hint="@string/app_name"
+        android:text="@string/appName"
         android:textSize="25sp">
 
     </TextView>
 
 <!-- city state -->
     <TextView
-        android:text="@string/CityState"
+        android:text="@string/cityState"
         android:layout_width="match_parent"
         android:layout_height="45sp"
         android:gravity="center"
@@ -34,7 +36,7 @@
 
     <!-- Degree -->
     <TextView
-        android:text="@string/Degree"
+        android:text="@string/degree"
         android:layout_width="140sp"
         android:layout_height="100sp"
         android:layout_marginRight="120dp"
@@ -53,7 +55,7 @@
 
 <!-- Feel -->
     <TextView
-        android:text="@string/Feel"
+        android:text="@string/feel"
         android:paddingBottom="30dp"
         android:layout_width="200dp"
         android:layout_marginLeft="25dp"
@@ -66,7 +68,7 @@
 
 <!-- Low Temp -->
     <TextView
-        android:text="@string/LowTemp"
+        android:text="@string/lowTemp"
         android:layout_width="match_parent"
         android:layout_height="30dp"
         android:layout_marginLeft="20dp"
@@ -75,7 +77,7 @@
 
     <!-- High Temp-->
     <TextView
-        android:text="@string/HighTemp"
+        android:text="@string/highTemp"
         android:layout_width="match_parent"
         android:layout_height="30dp"
         android:layout_marginLeft="20dp"
@@ -84,7 +86,7 @@
 
     <!-- humidity-->
     <TextView
-        android:text="@string/Humidity"
+        android:text="@string/humidity"
         android:layout_width="match_parent"
         android:layout_height="30dp"
         android:layout_marginLeft="20dp"
@@ -93,12 +95,13 @@
 
     <!-- pressure-->
     <TextView
-        android:text="@string/Pressure"
+        android:text="@string/pressure"
         android:layout_width="match_parent"
         android:layout_height="30dp"
         android:layout_marginLeft="20dp"
         android:textSize="25sp">
     </TextView>
+
 
 
 

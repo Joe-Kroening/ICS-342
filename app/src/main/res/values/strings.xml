@@ -1,16 +1,17 @@
 <resources>
-    <string name="app_name"> My Weather Application</string>
+    <string name="apiKey"> df9ecb000afccd5bf648b66458a17d67 </string>
+    <string name="unit"> imperial </string>
 
-    <string name="CityState">St.Paul,MN</string>
-
-    <string name="Degree">72°</string>
-
-    <string name="LowTemp">Low 65° </string>
-    <string name="HighTemp">High 80°</string>
-    <string name="Humidity">Humidity 100%</string>
-    <string name="Pressure">Pressure 1023 hPa</string>
-
-
-    <string name="Feel">Feels like 78°</string>
+    <string name="degreeSym">°</string>
+    <string name="appName"> My Weather Application</string>
+    <string name="cityState">St.Paul,MN</string>
+    <string name="degree">72°</string>
+    <string name="lowTemp">Low Temp: </string>
+    <string name="highTemp">High Temp: </string>
+    <string name="humidity">Humidity: </string>
+    <string name="pressure">Pressure </string>
+    <string name="pressureUnit">hpa </string>
+    <string name="humidityUnit">% </string>
+    <string name="feel">Feels like: </string>
 </resources>
 
