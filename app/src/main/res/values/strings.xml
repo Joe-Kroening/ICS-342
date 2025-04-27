@@ -13,5 +13,10 @@
     <string name="pressureUnit">hpa </string>
     <string name="humidityUnit">% </string>
     <string name="feel">Feels like: </string>
+    <string name="foreCastFor"> 16 Day Forecast  </string>
+    <string name="Weather"> Weather </string>
+    <string name="zipError"> Zip Code must be a five digit number </string>
+    <string name="search" > Search</string>
+    <string name="goFor"> go to forecast</string>
+    <string name="goWeath"> Go to Weather</string>
 </resources>
-
