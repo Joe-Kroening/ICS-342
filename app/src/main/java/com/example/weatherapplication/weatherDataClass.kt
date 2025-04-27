@@ -11,7 +11,7 @@ data class weatherDataClass(
     val weather: List<weatherData>,
     val main: mainData,
     val dt: Int,
-    val name: String,
+    val name: String
 
 )
 @JsonIgnoreUnknownKeys
