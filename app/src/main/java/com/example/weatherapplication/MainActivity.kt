@@ -1,12 +1,16 @@
 package com.example.weatherapplication
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +47,8 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import androidx.compose.material3.Button // Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -58,11 +64,75 @@ import kotlinx.serialization.Serializable
 import java.text.SimpleDateFormat
 
 import java.util.Date
+import android.Manifest.permission
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.os.Build
+import android.os.Looper
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import android.location.Address
+
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
 
 class MainActivity : ComponentActivity() {
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var locationCallback: LocationCallback
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+/*
+        locationCallback = object:LocationCallback(){
+            fun onLocationResult(locationResult: LocationResult?) {
+                locationResult ?: return
+            }
+        } */
+
         enableEdgeToEdge()
+
+
+
+        // Notification function
+
+        fun createNotificationChannel() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val name = getString(R.string.channel_name)
+                val descriptionText = getString(R.string.channel_description)
+                val importance = NotificationManager.IMPORTANCE_DEFAULT
+                val channel = NotificationChannel("A", name, importance).apply {
+                    description = descriptionText
+                }
+                val notificationManager: NotificationManager =
+                    getSystemService(Context.NOTIFICATION_SERVICE) as
+                            NotificationManager
+                notificationManager.createNotificationChannel(channel)
+            }
+        }
+
+        createNotificationChannel()
 
 
         // NEW!
@@ -120,39 +190,128 @@ class MainActivity : ComponentActivity() {
         }
 
     }
+
+/*
+    override fun onResume() {
+        super.onResume()
+        startLocationUpdates()
+    }
+        fun startLocationUpdates(){
+            val locationRequest = LocationRequest.BUILDER(Priority.PRIORITY_HIGH_ACCURACY, 10000)
+                .setMinUpdateIntervalMillis(5000)
+                .build()
+            fusedLocationClient.requestLocationUpdates(locationRequest,
+                locationCallback,
+                Looper.getMainLooper())
+
+        }*/
+
+
+
 }
+
+
+
 @Composable
 fun startApp() {
     // NEW!
+    val context:Context = LocalContext.current
     val weatherService = createRetrofitService()
     val apiKey = stringResource(R.string.apiKey)
     //val apiKey = resources.getString(R.string.apiKey) not working
     val units = stringResource(R.string.unit)
     //val units = resources.getString(R.string.unit) not working
-    //var zipCode = 55155
+    var zipCode = 55155
 
-    var zipCode = remember { mutableStateOf(55155) }
+    // Beginning Zip Code
+
+    //var zipCode = remember { mutableStateOf(55113) }
+
+    //val zipTest="55113"
+
+    val geocoder = Geocoder(context)
+    val maxResult=1
+
+    @Suppress("DEPRECATION")
+    var addressList: MutableList<Address> = geocoder.getFromLocationName(zipCode.toString(), maxResult)!!
+    val address = addressList.get(0)
+
+    val latTest = address.getLatitude()
+    val longTest = address.getLongitude()
+
+    //Toast.makeText(context,"$latTest   $longTest",Toast.LENGTH_LONG).show()
+
+
+
+    val latitude = remember {mutableStateOf(latTest) }
+    val longitude = remember {mutableStateOf(longTest)}
 
     val days = 16
-    val viewModel = WeatherModel(weatherService = weatherService, apiKey=apiKey, zipCodeState=zipCode, unit=units)
-    viewModel.fetchWeather()
+    //val viewModel = WeatherModel(weatherService = weatherService, apiKey=apiKey, zipCodeState=zipCode, unit=units)
+    //viewModel.fetchWeather()
 
 
 
+    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
-    // NEW!
+    val notificationService = createRetrofitNoteService()
+    val viewNoteModel = notificationModel(
+        weatherService = notificationService,
+        apiKey = apiKey,
+        latitude = latitude,
+        longitude = longitude,
+        unit = units
+    )
+    viewNoteModel.fetchWeather()
+
+    val notificationServiceLatLon = createRetrofitNoteServiceLatLon()
+    val viewModelForeLatLon = foreCastModelLatLon(
+        weatherService = notificationServiceLatLon,
+        apiKey = apiKey,
+        latitude = latitude,
+        longitude = longitude,
+        unit = units,
+        days=days
+    )
+    viewModelForeLatLon.fetchWeather()
+
+// printing out values to check that location call worked
+        //Toast.makeText(context,"${weatherNoteItems}",Toast.LENGTH_SHORT).show()
+        //  Toast.makeText(context,"${location.latitude}  ${location.longitude}",Toast.LENGTH_SHORT).show()
 
 
     // NEW VIEW!
     val foreCastService = createForeRetrofitService()
-    val viewModelFore = foreCastModel(weatherService = foreCastService, apiKey=apiKey, zipCode=zipCode, unit=units, days=days)
-    viewModelFore.fetchWeather()
-
-    navigation(viewModel=viewModel,viewModelFore=viewModelFore)
+    //val viewModelFore = foreCastModel(weatherService = foreCastService, apiKey=apiKey, zipCode=zipCode, unit=units, days=days)
+    //viewModelFore.fetchWeather()
 
 
+    navigation(viewModel=viewNoteModel,viewModelFore=viewModelForeLatLon)
 
 
+
+
+}
+
+@Composable
+fun getIcon(id: Double) : String {
+    var str: String=""
+    if (id < 300.0) {
+        str="R.drawable.storm"
+    }
+    if (id >= 300.0 && id <600.0) {
+        str="R.drawable.rain"
+    }
+    if (id>=600.0 && id<700.0) {
+        str="R.drawable.snow"
+    }
+    if (id==800.0) {
+        str="R.drawable.sun"
+    }
+    if (id>800.0) {
+        str="R.drawable.clouds"
+    }
+    return str
 }
 /*
 @Composable
@@ -179,6 +338,47 @@ fun DialogBox(onDismissRequest: ()->Unit) {
     Dialog(onDismissRequest= {onDismissRequest()}) {
         val textMesaage = "Enter valid ZipCode"
         Text(text=textMesaage)
+
+    }
+}
+
+
+@Composable
+fun MinimalDialogExample(onDismissRequest: ()->Unit) {
+    val message = stringResource(R.string.notAllowed)
+    Dialog(onDismissRequest={onDismissRequest()}) {
+        Card(modifier=Modifier) {
+            Text(
+                text=message
+            )
+            Row{
+                Button(
+                    onClick={
+                        onDismissRequest()
+                    }) {
+                    Text(text="Confirm")
+                }
+                Button(
+                    onClick={
+                        onDismissRequest()
+                    }) {
+                    Text(text="Dismiss")
+                }
+            }
+
+
+        }
+    }
+}
+
+@Composable
+//fun RunDialog() {
+    fun RunDialog(showDialog: MutableState<Boolean>) {
+   // val showDialog=remember{mutableStateOf(true)}
+    if(showDialog.value==true) {
+        MinimalDialogExample(
+            onDismissRequest={showDialog.value=false}
+        )
     }
 }
 
@@ -186,7 +386,9 @@ fun DialogBox(onDismissRequest: ()->Unit) {
 
 //  NEW !
 @Composable
-fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
+fun WeatherScreen(data: notificationModel, onButtonClicked:()->Unit) {
+    val context:Context = LocalContext.current
+
     val weatherItems by data.weatherItems.observeAsState()
 
     val temp = weatherItems?.main?.temp
@@ -202,18 +404,214 @@ fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
     val feel = weatherItems?.main?.feelsLike
     val feelR = feel?.toInt()
     val city = weatherItems?.name
-    val zip = data.getZip()
+    //val zip = data.getZip()
+    val degSym = stringResource(R.string.degreeSym)
 
     var text: String = ""
 
+    val showDialog = remember{mutableStateOf(false)}
+
     val weather = weatherItems?.weather  // getting list of weather items
     val firstWeatherID=weather?.first()?.id  //get first element of the list
+    val weatherCond=weather?.first()?.main
+
+    val apiKey=data.getApi()
+    val latitude: Double
+
+
+
+    // Notification
+
+    val intent = Intent(context, MainActivity::class.java).apply{
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK}
+
+
+    val pendingIntent: PendingIntent = PendingIntent.getActivity(
+        context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
+    if (firstWeatherID != null) {
+        if (firstWeatherID < 300.0) {
+            val builder = NotificationCompat.Builder(context, "A")
+                .setSmallIcon(R.drawable.storm)
+                .setContentTitle("$city")
+                .setContentText("$tempR$degSym   $weatherCond")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+
+            with(NotificationManagerCompat.from(context)) {
+                if (ActivityCompat.checkSelfPermission(
+                        context,
+                        permission.POST_NOTIFICATIONS
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return
+                }
+                notify(0, builder.build())
+            }
+        }
+    }
+
+    if (firstWeatherID != null) {
+        if (firstWeatherID >= 300.0 && firstWeatherID<600.0) {
+            val builder = NotificationCompat.Builder(context, "A")
+                .setSmallIcon(R.drawable.rain)
+                .setContentTitle("$city")
+                .setContentText("$tempR$degSym   $weatherCond")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+
+            with(NotificationManagerCompat.from(context)) {
+                if (ActivityCompat.checkSelfPermission(
+                        context,
+                        permission.POST_NOTIFICATIONS
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return
+                }
+                notify(0, builder.build())
+            }
+        }
+    }
+
+    if (firstWeatherID != null) {
+        if (firstWeatherID >= 600.0 && firstWeatherID<700.0) {
+            val builder = NotificationCompat.Builder(context, "A")
+                .setSmallIcon(R.drawable.snow)
+                .setContentTitle("$city")
+                .setContentText("$tempR$degSym   $weatherCond")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+
+            with(NotificationManagerCompat.from(context)) {
+                if (ActivityCompat.checkSelfPermission(
+                        context,
+                        permission.POST_NOTIFICATIONS
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return
+                }
+                notify(0, builder.build())
+            }
+        }
+    }
+
+    if (firstWeatherID == 800.0) {
+        val builder = NotificationCompat.Builder(context, "A")
+            .setSmallIcon(R.drawable.sun)
+            .setContentTitle("$city")
+            .setContentText("$tempR$degSym   $weatherCond")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+
+        with(NotificationManagerCompat.from(context)) {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return
+            }
+            notify(0, builder.build())
+        }
+    }
+
+    if (firstWeatherID != null) {
+        if (firstWeatherID >= 800.0) {
+            val builder = NotificationCompat.Builder(context, "A")
+                .setSmallIcon(R.drawable.clouds)
+                .setContentTitle("$city")
+                .setContentText("$tempR$degSym   $weatherCond")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+
+            with(NotificationManagerCompat.from(context)) {
+                if (ActivityCompat.checkSelfPermission(
+                        context,
+                        permission.POST_NOTIFICATIONS
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return
+                }
+                notify(0, builder.build())
+            }
+        }
+    }
+    {
+    //with(NotificationManagerCompat.from(context)){
+        //notify(0, builder.build())
+    }
+
+    @Composable
+    fun getIcon(id: Double) : String {
+        var str: String=""
+        if (id < 300.0) {
+            str="R.drawable.storm"
+        }
+        if (id >= 300.0 && id <600.0) {
+            str="R.drawable.rain"
+        }
+        if (id>=600.0 && id<700.0) {
+            str="R.drawable.snow"
+        }
+        if (id==800.0) {
+            str="R.drawable.sun"
+        }
+        if (id>800.0) {
+            str="R.drawable.clouds"
+        }
+        return str
+    }
+    val icon = firstWeatherID?.let { getIcon(it) }
+
+
 
 
     Column {
         Box(
-            modifier = Modifier.fillMaxWidth()
-                .height(60.dp).background(Color.Gray)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+                .background(Color.Gray)
         ) {
             Text(
                 stringResource(R.string.appName), fontSize = 27.sp,
@@ -225,7 +623,9 @@ fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
         }
 // CityState
         Row(
-            modifier = Modifier.fillMaxWidth().padding(15.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(15.dp),
             horizontalArrangement = Arrangement.Center
         ) {
             Text(
@@ -254,7 +654,7 @@ fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
                 if(firstWeatherID < 300.0) {
                     Image(
                         painter = painterResource(id = R.drawable.storm),
-                        contentDescription = "Thunderstrom"
+                        contentDescription = stringResource(R.string.Thunderstrom)
                     )
                 }
             }
@@ -265,7 +665,7 @@ fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
                 if(firstWeatherID < 600.0 && firstWeatherID >= 300.0) {
                     Image(
                         painter = painterResource(id = R.drawable.rain),
-                        contentDescription = "Rain"
+                        contentDescription = stringResource(R.string.Rain)
                     )
                 }
             }
@@ -274,7 +674,7 @@ fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
                 if(firstWeatherID < 700.0 && firstWeatherID > 600.0) {
                     Image(
                         painter = painterResource(id = R.drawable.snow),
-                        contentDescription = "Snow"
+                        contentDescription = stringResource(R.string.Snow)
                     )
                 }
             }
@@ -283,7 +683,7 @@ fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
             if(firstWeatherID==800.0) {
                 Image(
                     painter = painterResource(id = R.drawable.sun),
-                    contentDescription = "Sunny"
+                    contentDescription = stringResource(R.string.Sunny)
                 )
             }
 // Image
@@ -291,7 +691,7 @@ fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
                 if(firstWeatherID > 800.0) {
                     Image(
                         painter = painterResource(id = R.drawable.clouds),
-                        contentDescription = "Clouds"
+                        contentDescription = stringResource(R.string.Clouds)
                     )
                 }
             }
@@ -314,7 +714,9 @@ fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
             )
         }
 
-        Card(modifier = Modifier.fillMaxWidth().padding(15.dp)) {
+        Card(modifier = Modifier
+            .fillMaxWidth()
+            .padding(15.dp)) {
 
             Row(){
                 Column(){
@@ -465,21 +867,161 @@ fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
             )
 
         }
+
+
 */
+
+
 
 
 
         @Composable
         fun text1() {
-            var zipCodeState by data.zipCodeState
+            //var zipCodeState by data.zipCodeState
             var newZipCode by remember {mutableStateOf("")}
             var newZipCodeInt by remember {mutableStateOf(0)}
+
             val context=LocalContext.current
             val message=stringResource(R.string.zipError)
+            val permission = arrayOf(
+                android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            )
+            val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()
+            ) { permissionMap ->
+                val isGranted = permissionMap.values.reduce{acc, next -> acc && next}
+                if(isGranted) {
+
+                    //createLocation()
+                    //Create Location object
+                    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+                    val result=fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                        location?.let {
+                            it.latitude
+                            it.longitude
+                        }
+
+                        val latitude = location.latitude
+                        val longitude = location.longitude
+
+                        data.updateLat(latitude)
+                        data.updateLong(longitude)
+
+                    // Notification
+/*
+                    val intent = Intent(context, MainActivity::class.java).apply{
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK}
 
 
+                    val pendingIntent: PendingIntent = PendingIntent.getActivity(
+                        context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
+
+                    val builder = NotificationCompat.Builder( context, "A")
+                        .setSmallIcon(R.drawable.sun)
+                        .setContentTitle("$data.weatherItems.name")
+                        .setContentText("$tempR$degSym   $weatherCond")
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setContentIntent(pendingIntent)
+                        .setAutoCancel(true)
+
+                    with(NotificationManagerCompat.from(context)){
+
+                        notify(0, builder.build())
+                    }
+                    */
+
+                    //Toast.makeText(context,"Hello  World",Toast.LENGTH_SHORT).show()
+
+
+
+                        // printing out values to check that location call worked
+                        //Toast.makeText(context,"${weatherNoteItems}",Toast.LENGTH_SHORT).show()
+                        //Toast.makeText(context,"${location.latitude}  ${location.longitude}",Toast.LENGTH_SHORT).show()
+                    }
+
+
+                }
+                else {
+                    // show dialog box
+                    showDialog.value=true
+                    //val message2="Permission was denied!"
+                    //Toast.makeText(context,message2,Toast.LENGTH_SHORT).show()
+                }
+            }
+
+
+
+            fun checkAndRequestPermission(
+                context: Context,
+                permission: Array<String>,
+                launcher: ManagedActivityResultLauncher<Array<String>, Map<String, Boolean>>
+            ) {
+                if (
+                    permission.all {
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            it
+                        ) == PackageManager.PERMISSION_GRANTED
+                    }
+                ) {
+                    //createLocation()
+
+                    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+                    val result=fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                        location?.let {
+                            it.latitude
+                            it.longitude
+                        }
+
+                        val latitude = location.latitude
+                        val longitude = location.longitude
+
+                        data.updateLat(latitude)
+                        data.updateLong(longitude)
+
+                    // Notification
+
+/*
+                    val intent = Intent(context, MainActivity::class.java).apply{
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK}
+
+
+                    val pendingIntent: PendingIntent = PendingIntent.getActivity(
+                        context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
+
+                    val builder = NotificationCompat.Builder( context, "A")
+                        .setSmallIcon(R.drawable.sun)
+                        .setContentTitle("$city")
+                        .setContentText("$tempR$degSym  $weatherCond")
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setContentIntent(pendingIntent)
+                        .setAutoCancel(true)
+
+                    with(NotificationManagerCompat.from(context)){
+
+                        notify(0, builder.build())
+                    }
+*/
+
+
+
+
+// printing out values to check that location call worked
+                        //Toast.makeText(context,"${weatherNoteItems}",Toast.LENGTH_SHORT).show()
+                          //Toast.makeText(context,"${location.latitude}  ${location.longitude}",Toast.LENGTH_SHORT).show()
+                    }
+
+
+                } else {
+                    launcher.launch(permission)
+                }
+            }
 
             OutlinedTextField(
+                modifier=Modifier.width(130.dp),
                 value = newZipCode,
                 onValueChange = { newZipCode = it },
                 label = { Text("ZipCode") },
@@ -488,7 +1030,7 @@ fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
             Button(onClick={
                 if(newZipCode.length==5 && newZipCode.toInt()!=null && !newZipCode.contains('.') && newZipCode[0]!='-')   {
                     newZipCodeInt = newZipCode.toInt()
-                    data.updateZip(newZipCodeInt)
+                    //data.updateZip(newZipCodeInt)
                 }
                 else {
                     Toast.makeText(context,message,Toast.LENGTH_SHORT).show()
@@ -497,6 +1039,27 @@ fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
             }){
                 Text(text=stringResource(R.string.search))
             }
+
+            // Home Image
+
+            Spacer(modifier= Modifier.width(85.dp))
+                Image(
+                    painter = painterResource(id = R.drawable.home),
+                    contentDescription = "Home",
+                    modifier=Modifier
+                        .height(60.dp)
+                        .clickable { //showDialog.value=true
+                            checkAndRequestPermission(
+                                context = context,
+                                permission = permission,
+                                launcher = launcher
+                            )
+                        }
+                        //.padding(start = 85.dp),
+
+                    )
+          //  }
+
         }
 
         Row {
@@ -508,9 +1071,10 @@ fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
             Button(onClick=onButtonClicked) {
                 Text(text=stringResource(R.string.goFor))
             }
+
         }
 
-
+/*
 //Zip Button
             @Composable
             fun validateButton() {
@@ -523,20 +1087,25 @@ fun WeatherScreen(data: WeatherModel,onButtonClicked:()->Unit) {
     // Button call
     //validateButton()
     {
-        Text(text = "Search")
+        Text(text = stringResource(R.string.search))
     }
 }
+
+ */
+        Column(modifier=Modifier.height(30.dp)){
+
             }
 
+}
 
-
-
+// Show dialog box associated with home
+RunDialog(showDialog)
 
 }
 
 // Second Screen
 @Composable
-fun foreCastScreen(data: foreCastModel,onButtonClicked:()->Unit) {
+fun foreCastScreen(data: foreCastModelLatLon,onButtonClicked:()->Unit) {
     val foreCastItems by data.foreCastItems.observeAsState()
     val city = foreCastItems?.city?.name
     val city2 = foreCastItems?.city
@@ -544,8 +1113,10 @@ fun foreCastScreen(data: foreCastModel,onButtonClicked:()->Unit) {
 
     Column {
         Box(
-            modifier = Modifier.fillMaxWidth()
-                .height(60.dp).background(Color.Gray)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+                .background(Color.Gray)
         ) {
             Text(
                 stringResource(R.string.appName), fontSize = 27.sp,
@@ -582,8 +1153,9 @@ fun foreCastScreen(data: foreCastModel,onButtonClicked:()->Unit) {
            // }
         }
 
-        Box(modifier=Modifier.fillMaxWidth()
-                            .height(600.dp)) {
+        Box(modifier=Modifier
+            .fillMaxWidth()
+            .height(600.dp)) {
             LazyColumn(modifier=Modifier.fillMaxWidth(),
                 userScrollEnabled = true
             ) {
@@ -601,7 +1173,9 @@ fun foreCastScreen(data: foreCastModel,onButtonClicked:()->Unit) {
 
                     item{
                         // Row(modifier=Modifier.fillMaxWidth()){
-                        Card(modifier = Modifier.fillMaxWidth().padding(15.dp)) {
+                        Card(modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(15.dp)) {
                             Text(
                             text = "$dateS",
                             modifier = Modifier.padding(15.dp),
@@ -879,10 +1453,45 @@ fun createForeRetrofitService(): foreCastInterface {
         .build()
         .create(foreCastInterface::class.java)
 }
+// Retrofit service based on lat lon
+fun createRetrofitNoteServiceLatLon(): foreCastInterfaceLatLon {
+    val logging = HttpLoggingInterceptor()
+    logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+    val client: OkHttpClient = OkHttpClient.Builder()
+        .addInterceptor(logging)
+        .build()
+    return Retrofit.Builder()
+        .baseUrl("https://api.openweathermap.org/")
+        .client(client)
+        .addConverterFactory(
+            Json.asConverterFactory(
+                "application/json".toMediaType()
+            ))
+        .build()
+        .create(foreCastInterfaceLatLon::class.java)
+}
+
+// notification
+fun createRetrofitNoteService(): notificationInterface {
+    val logging = HttpLoggingInterceptor()
+    logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+    val client: OkHttpClient = OkHttpClient.Builder()
+        .addInterceptor(logging)
+        .build()
+    return Retrofit.Builder()
+        .baseUrl("https://api.openweathermap.org/")
+        .client(client)
+        .addConverterFactory(
+            Json.asConverterFactory(
+                "application/json".toMediaType()
+            ))
+        .build()
+        .create(notificationInterface::class.java)
+}
 
 // Navigation
 @Composable
-fun navigation(viewModel: WeatherModel, viewModelFore: foreCastModel) {
+fun navigation(viewModel: notificationModel, viewModelFore: foreCastModelLatLon) {
 
     val navController = rememberNavController()
 
