@@ -19,4 +19,17 @@
     <string name="search" > Search</string>
     <string name="goFor"> go to forecast</string>
     <string name="goWeath"> Go to Weather</string>
+    <string name="home"> Home </string>
+    <string name="channel_name">jchannel</string>
+    <string name="channel_description"> channelDescription</string>
+
+    <string name="Thunderstrom"> Thunderstrom</string>
+    <string name="Rain"> Rain </string>
+    <string name="Snow"> Snow </string>
+    <string name="Sunny"> Sunny </string>
+    <string name="Clouds"> Clouds</string>
+
+    <string name="notAllowed">Permission was denied!</string>
+
+
 </resources>

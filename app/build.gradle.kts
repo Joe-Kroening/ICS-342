@@ -62,7 +62,9 @@ dependencies {
     implementation(libs.retrofit.kotlin.serialization)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-    //
+    //NEW!!
+    implementation("com.google.android.gms:play-services-location:19.0.1")
+    implementation(libs.androidx.espresso.core)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -29,9 +29,14 @@ class WeatherModel (
             zipCodeState.value=newZip
         }
 
+        fun getApi(): String {
+            return apiKey
+        }
+
         fun getZip(): Int? {
             return zipCodeState.value
         }
+
 
 
     //! END OF NEW
