@@ -9,8 +9,8 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class WeatherModel (
-    private val weatherService: weatherInterface,
+class WeatherModel(
+    private val weatherService: weatherInterface?,
     private val apiKey: String,
     public var zipCodeState: MutableState<Int>,
 
@@ -41,7 +41,7 @@ class WeatherModel (
 
     //! END OF NEW
 
-
+/*
         fun fetchWeather() {
             val call = weatherService.getWeather(apiKey, zip2, unit)
             call.enqueue(object: Callback<weatherDataClass> {
@@ -53,5 +53,5 @@ class WeatherModel (
                     Log.e("Weather", "Failure fetching Weather", p1)
                 }
             })
-        }
+        }*/
     }
