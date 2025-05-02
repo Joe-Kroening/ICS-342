@@ -90,6 +90,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import android.location.Address
+import androidx.compose.ui.platform.testTag
 
 
 import kotlinx.coroutines.Dispatchers
@@ -210,7 +211,25 @@ class MainActivity : ComponentActivity() {
 
 }
 
-
+fun GetIcon2(id: Double) : String {
+    var str: String=""
+    if (id < 300.0) {
+        str="R.drawable.storm"
+    }
+    if (id >= 300.0 && id <600.0) {
+        str="R.drawable.rain"
+    }
+    if (id>=600.0 && id<700.0) {
+        str="R.drawable.snow"
+    }
+    if (id==800.0) {
+        str="R.drawable.sun"
+    }
+    if (id>800.0) {
+        str="R.drawable.clouds"
+    }
+    return str
+}
 
 @Composable
 fun startApp() {
@@ -352,13 +371,13 @@ fun MinimalDialogExample(onDismissRequest: ()->Unit) {
                 text=message
             )
             Row{
-                Button(
+                Button(modifier=Modifier.testTag("NoPermission"),
                     onClick={
                         onDismissRequest()
                     }) {
                     Text(text="Confirm")
                 }
-                Button(
+                Button(modifier=Modifier.testTag("Confirm"),
                     onClick={
                         onDismissRequest()
                     }) {
@@ -608,7 +627,7 @@ fun WeatherScreen(data: notificationModel, onButtonClicked:()->Unit) {
 
     Column {
         Box(
-            modifier = Modifier
+            modifier = Modifier.testTag("AppNameBox")
                 .fillMaxWidth()
                 .height(60.dp)
                 .background(Color.Gray)
@@ -631,7 +650,7 @@ fun WeatherScreen(data: notificationModel, onButtonClicked:()->Unit) {
             Text(
                 text = "$city", fontSize = 27.sp,
                 //stringResource(R.string.cityState), fontSize = 27.sp,
-                modifier = Modifier
+                modifier = Modifier.testTag("City")
                     .padding(0.dp)
             )
 
@@ -640,7 +659,7 @@ fun WeatherScreen(data: notificationModel, onButtonClicked:()->Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = "$tempR", fontSize = 100.sp,
-                modifier = Modifier
+                modifier = Modifier.testTag("TempR")
                     .padding(start = 30.dp)
             )
             Text(
@@ -703,14 +722,16 @@ fun WeatherScreen(data: notificationModel, onButtonClicked:()->Unit) {
             Text(
                 stringResource(R.string.feel), fontSize = 15.sp,
                 modifier = Modifier.padding(start = 40.dp)
+                    .testTag("Feel")
             )
             Text(
                 text = "$feelR", fontSize = 15.sp,
                 modifier = Modifier
+                    .testTag("FeelR")
             )
             Text(
                 stringResource(R.string.degreeSym), fontSize = 30.sp,
-                modifier = Modifier
+                modifier = Modifier.testTag("degSym")
             )
         }
 
@@ -721,12 +742,13 @@ fun WeatherScreen(data: notificationModel, onButtonClicked:()->Unit) {
             Row(){
                 Column(){
                     Row(modifier = Modifier.padding(15.dp)) {
-                        Column(modifier = Modifier.padding(10.dp)) { Text(
+                        Column(modifier = Modifier.padding(10.dp)
+                            .testTag("lowTemp")) { Text(
                             text= stringResource(R.string.lowTemp),
                             fontSize =  20.sp
                         )
                             Row {
-                                Text(
+                                Text(modifier=Modifier.testTag("lowTempR"),
                                     text = "$lowTempR",
                                     fontSize =  20.sp
                                 )
@@ -738,12 +760,12 @@ fun WeatherScreen(data: notificationModel, onButtonClicked:()->Unit) {
 
                         }
 
-                        Column(modifier = Modifier.padding(10.dp)) { Text(
+                        Column(modifier = Modifier.padding(10.dp).testTag("highTemp")) { Text(
                             text= stringResource(R.string.highTemp),
                             fontSize =  20.sp
                         )
                             Row {
-                                Text(
+                                Text(modifier=Modifier.testTag("highTempR"),
                                     text = "$highTempR",
                                     fontSize =  20.sp
                                 )
@@ -758,12 +780,13 @@ fun WeatherScreen(data: notificationModel, onButtonClicked:()->Unit) {
 
                     }
                     Row(modifier = Modifier.padding(15.dp)) {
-                        Column(modifier = Modifier.padding(10.dp)) { Text(
+                        Column(modifier = Modifier.padding(10.dp)
+                            .testTag("Hum")) { Text(
                             text= stringResource(R.string.humidity),
                             fontSize =  20.sp
                         )
                             Row {
-                                Text(
+                                Text(modifier=Modifier.testTag("HumR"),
                                     text = "$humidityR",
                                     fontSize =  20.sp
                                 )
@@ -775,12 +798,13 @@ fun WeatherScreen(data: notificationModel, onButtonClicked:()->Unit) {
 
                         }
 
-                        Column(modifier = Modifier.padding(15.dp)) { Text(
+                        Column(modifier = Modifier.padding(15.dp)
+                            .testTag("Press")) { Text(
                             text= stringResource(R.string.pressure),
                             fontSize =  20.sp
                         )
                             Row {
-                                Text(
+                                Text(modifier=Modifier.testTag("PressR"),
                                     text = "$pressureR",
                                     fontSize =  20.sp
                                 )
@@ -1021,13 +1045,13 @@ fun WeatherScreen(data: notificationModel, onButtonClicked:()->Unit) {
             }
 
             OutlinedTextField(
-                modifier=Modifier.width(130.dp),
+                modifier=Modifier.width(130.dp).testTag("TextField"),
                 value = newZipCode,
                 onValueChange = { newZipCode = it },
                 label = { Text("ZipCode") },
                 keyboardOptions = KeyboardOptions(keyboardType= KeyboardType.Number)
             )
-            Button(onClick={
+            Button(modifier=Modifier.testTag("zipButton"),onClick={
                 if(newZipCode.length==5 && newZipCode.toInt()!=null && !newZipCode.contains('.') && newZipCode[0]!='-')   {
                     newZipCodeInt = newZipCode.toInt()
                     //data.updateZip(newZipCodeInt)
@@ -1046,7 +1070,7 @@ fun WeatherScreen(data: notificationModel, onButtonClicked:()->Unit) {
                 Image(
                     painter = painterResource(id = R.drawable.home),
                     contentDescription = "Home",
-                    modifier=Modifier
+                    modifier=Modifier.testTag("Home")
                         .height(60.dp)
                         .clickable { //showDialog.value=true
                             checkAndRequestPermission(
@@ -1068,7 +1092,7 @@ fun WeatherScreen(data: notificationModel, onButtonClicked:()->Unit) {
         }
         Row{
             // Button
-            Button(onClick=onButtonClicked) {
+            Button(modifier=Modifier.testTag("ForeButton"),onClick=onButtonClicked) {
                 Text(text=stringResource(R.string.goFor))
             }
 
@@ -1113,14 +1137,14 @@ fun foreCastScreen(data: foreCastModelLatLon,onButtonClicked:()->Unit) {
 
     Column {
         Box(
-            modifier = Modifier
+            modifier = Modifier.testTag("AppNameBox2")
                 .fillMaxWidth()
                 .height(60.dp)
                 .background(Color.Gray)
         ) {
             Text(
                 stringResource(R.string.appName), fontSize = 27.sp,
-                modifier = Modifier
+                modifier = Modifier.testTag("AppName2")
                     .padding(15.dp)
                     .fillMaxWidth()
             )
@@ -1134,7 +1158,7 @@ fun foreCastScreen(data: foreCastModelLatLon,onButtonClicked:()->Unit) {
                     horizontalArrangement = Arrangement.Center) {
                     Text(
                         stringResource(R.string.foreCastFor), fontSize = 48.sp,
-                        modifier = Modifier
+                        modifier = Modifier.testTag("ForeCastFor")
                             .padding(25.dp)
                     )
                 }
@@ -1178,18 +1202,20 @@ fun foreCastScreen(data: foreCastModelLatLon,onButtonClicked:()->Unit) {
                             .padding(15.dp)) {
                             Text(
                             text = "$dateS",
-                            modifier = Modifier.padding(15.dp),
+                            modifier = Modifier.padding(15.dp)
+                                .testTag("Date"),
                             fontSize = 45.sp
                         )
                             Row(){
                                 Column(){
                                     Row(modifier = Modifier.padding(15.dp)) {
-                                        Column(modifier = Modifier.padding(10.dp)) { Text(
+                                        Column(modifier = Modifier.padding(10.dp).
+                                        testTag("lowTemp2")) { Text(
                                             text= stringResource(R.string.lowTemp),
                                             fontSize =  20.sp
                                         )
                                             Row {
-                                                Text(
+                                                Text(modifier=Modifier.testTag("lowTempR2"),
                                                     text = "$lowTemp",
                                                     fontSize =  20.sp
                                                 )
@@ -1201,12 +1227,12 @@ fun foreCastScreen(data: foreCastModelLatLon,onButtonClicked:()->Unit) {
 
                                         }
 
-                                        Column(modifier = Modifier.padding(10.dp)) { Text(
+                                        Column(modifier = Modifier.padding(10.dp).testTag("highTemp2")) { Text(
                                             text= stringResource(R.string.highTemp),
                                             fontSize =  20.sp
                                         )
                                             Row {
-                                                Text(
+                                                Text(modifier=Modifier.testTag("highTempR2"),
                                                     text = "$highTemp",
                                                     fontSize =  20.sp
                                                 )
@@ -1221,12 +1247,12 @@ fun foreCastScreen(data: foreCastModelLatLon,onButtonClicked:()->Unit) {
 
                                     }
                                     Row(modifier = Modifier.padding(15.dp)) {
-                                        Column(modifier = Modifier.padding(10.dp)) { Text(
+                                        Column(modifier = Modifier.padding(10.dp).testTag("Hum2")) { Text(
                                             text= stringResource(R.string.humidity),
                                             fontSize =  20.sp
                                         )
                                             Row {
-                                                Text(
+                                                Text(modifier=Modifier.testTag("HumR2"),
                                                     text = "$humidity",
                                                     fontSize =  20.sp
                                                 )
@@ -1238,12 +1264,12 @@ fun foreCastScreen(data: foreCastModelLatLon,onButtonClicked:()->Unit) {
 
                                         }
 
-                                        Column(modifier = Modifier.padding(10.dp)) { Text(
+                                        Column(modifier = Modifier.padding(10.dp).testTag("Press2")) { Text(
                                             text= stringResource(R.string.pressure),
                                             fontSize =  20.sp
                                         )
                                             Row {
-                                                Text(
+                                                Text(modifier=Modifier.testTag("PressR2"),
                                                     text = "$pressure",
                                                     fontSize =  20.sp
                                                 )
@@ -1387,7 +1413,7 @@ fun foreCastScreen(data: foreCastModelLatLon,onButtonClicked:()->Unit) {
 
 
 // Button
-            Button(onClick = onButtonClicked) {
+            Button(modifier=Modifier.testTag("WeatherButton"),onClick = onButtonClicked) {
                 Text(text = stringResource(R.string.goWeath))
             }
 

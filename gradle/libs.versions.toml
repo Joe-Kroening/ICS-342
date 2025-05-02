@@ -12,6 +12,8 @@ composeBom = "2024.04.01"
 # Added
 retrofit = "2.11.0"
 kotlin-serialization = "2.1.0"
+junitJupiter = "5.8.1"
+uiTestJunit4Android = "1.8.0"
 
 
 [libraries]
@@ -35,6 +37,8 @@ androidx-compose-runtime-livedata = { group = "androidx.compose.runtime", name =
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-kotlin-serialization = { group = "com.squareup.retrofit2", name = "converter-kotlinx-serialization", version.ref = "retrofit" }
 kotlin-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.8.0" }
+junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junitJupiter" }
+androidx-ui-test-junit4-android = { group = "androidx.compose.ui", name = "ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

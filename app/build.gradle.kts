@@ -65,8 +65,10 @@ dependencies {
     //NEW!!
     implementation("com.google.android.gms:play-services-location:19.0.1")
     implementation(libs.androidx.espresso.core)
+    implementation(libs.androidx.ui.test.junit4.android)
 
     testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
